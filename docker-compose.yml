@@ -1,0 +1,62 @@
+version: '3'
+services:
+  web:
+    restart: always
+    build:
+      context: ./mquery/
+      dockerfile: deploy/docker/web.Dockerfile
+    ports:
+    - "80:5000"
+    links:
+    - redis
+    volumes:
+    - "/home/ekorolev/Development/ANY.RUN/ursa/samples/:/mnt/samples"
+    depends_on:
+      - "redis"
+      - "daemon1"
+      - "daemon2"
+      - "ursadb1"
+      - "ursadb2"
+  daemon1:
+    restart: always
+    build:
+      context: ./mquery/
+      dockerfile: deploy/docker/daemon.Dockerfile
+    volumes:
+    - "/home/ekorolev/Development/ANY.RUN/ursa/samples/i1:/mnt/samples"
+    depends_on:
+      - "redis"
+      - "ursadb1"
+    environment:
+      - "MQUERY_BACKEND=tcp://ursadb1:9281"
+  daemon2:
+    restart: always
+    build:
+      context: ./mquery/
+      dockerfile: deploy/docker/daemon.Dockerfile
+    volumes:
+    - "/home/ekorolev/Development/ANY.RUN/ursa/samples/i2:/mnt/samples"
+    depends_on:
+      - "redis"
+      - "ursadb2"
+    environment:
+      - "MQUERY_BACKEND=tcp://ursadb2:9281"
+  ursadb1:
+    restart: always
+    image: certpl/ursadb
+    ports:
+    - "127.0.0.1:5001:9281"
+    volumes:
+    - "/home/ekorolev/Development/ANY.RUN/ursa/samples/i1:/mnt/samples"
+    - "/home/ekorolev/Development/ANY.RUN/ursa/indexes/i1:/var/lib/ursadb"
+  ursadb2:
+    restart: always
+    image: certpl/ursadb
+    ports:
+    - "127.0.0.1:5002:9281"
+    volumes:
+    - "/home/ekorolev/Development/ANY.RUN/ursa/samples/i2:/mnt/samples"
+    - "/home/ekorolev/Development/ANY.RUN/ursa/indexes/i2:/var/lib/ursadb"
+  redis:
+    restart: always
+    image: redis
